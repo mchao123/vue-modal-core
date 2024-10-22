@@ -1,0 +1,27 @@
+{
+    "name": "vue-modal-core",
+    "version": "1.0.0",
+    "license": "MIT",
+    "description": "better vue modal",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/mchao123/vue-modal-core.git"
+    },
+    "main": "src/index.ts",
+    "type": "module",
+    "author": "ZhangSan",
+    "peerDependencies": {
+        "typescript": "^5.2.2"
+    },
+    "devDependencies": {
+        "typescript": "^5.2.2"
+    },
+    "dependencies": {
+        "vue": "^3.4.37"
+    },
+    "keywords": [
+        "vue",
+        "modal",
+        "vue3"
+    ]
+}
