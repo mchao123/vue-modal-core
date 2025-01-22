@@ -48,7 +48,7 @@ import { onBeforeClose } from 'vue-modal-core';
 defineProps<{
   content: string;
 }>()
-defineModel<boolean>('show')
+defineModel<boolean>('visible')
 
 // 在模态框组件中使用关闭前钩子
 onBeforeClose(async () => {
@@ -57,7 +57,7 @@ onBeforeClose(async () => {
 });
 </script>
 <template>
-  <div class="modal" :class="{ 'show': show }">
+  <div class="modal" :class="{ 'show': visible }">
     <div class="modal-content">
       {{ content }}
       <button @click="$emit('update:visible', false)">关闭</button>
