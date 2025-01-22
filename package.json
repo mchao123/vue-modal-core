@@ -1,8 +1,8 @@
 {
     "name": "vue-modal-core",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "license": "MIT",
-    "description": "better vue modal",
+    "description": "A lightweight and flexible Vue 3 modal component library that provides a better way to handle modals in your Vue applications",
     "repository": {
         "type": "git",
         "url": "https://github.com/mchao123/vue-modal-core.git"
@@ -11,17 +11,19 @@
     "type": "module",
     "author": "ZhangSan",
     "peerDependencies": {
-        "typescript": "^5.2.2"
+        "typescript": "^5.2.2",
+        "vue": "^3.4.37"
     },
     "devDependencies": {
         "typescript": "^5.2.2"
     },
-    "dependencies": {
-        "vue": "^3.4.37"
-    },
     "keywords": [
         "vue",
         "modal",
-        "vue3"
+        "vue3",
+        "dialog",
+        "popup",
+        "overlay",
+        "typescript"
     ]
 }

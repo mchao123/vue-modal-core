@@ -1,157 +1,159 @@
 # vue-modal-core
 
-## 📖 Description
+一个轻量级且灵活的 Vue 3 模态框组件库，为您的 Vue 应用提供更好的模态框管理方案。
 
-一个好用的vue3模态框的api核心，可以简单的封装一个函数式的模态框，注意：这个项目只提供api不包含模态框
+[![npm version](https://img.shields.io/npm/v/vue-modal-core.svg)](https://www.npmjs.com/package/vue-modal-core)
+[![license](https://img.shields.io/npm/l/vue-modal-core.svg)](https://github.com/mchao123/vue-modal-core/blob/main/LICENSE)
 
-## 📦 安装
+## 特性
+
+- 🎯 完全基于 TypeScript 开发，提供完整的类型支持
+- 🚀 轻量级设计，无外部依赖
+- 💪 支持异步关闭控制
+- 🎨 灵活的自定义样式
+- 📦 支持多模态框管理
+- 🔧 简单易用的 API
+
+## 安装
 
 ```bash
 npm install vue-modal-core
+# 或
+yarn add vue-modal-core
+# 或
+pnpm add vue-modal-core
 ```
 
+## 快速开始
 
-## 🛠️ 依赖
+1.创建实例
 
-[Vue](https://vuejs.org/)
+```typescript
+// dialog.ts
+import { createModalContext } from 'vue-modal-core';
 
+export { makeModal, ModalRenderer } = createModalContext({
+  baseZIndex: 1000,
+  allowMultiple: true
+});
+```
 
-## 🤖 使用
+2. 创建模态框组件：
 
-App.vue
 ```vue
+<!-- MyModal.vue -->
 <script setup lang="ts">
-import { RouterView } from 'vue-router'
-import ModalRenderer from 'vue-modal-core';
-</script>
+import { onBeforeClose } from 'vue-modal-core';
 
+defineProps<{
+  content: string;
+}>()
+defineModel<boolean>('show')
+
+// 在模态框组件中使用关闭前钩子
+onBeforeClose(async () => {
+  await new Promise(resolve => setTimeout(resolve, 1000));// 等待 1 秒
+  // 返回 false 可以阻止模态框关闭
+});
+</script>
 <template>
-  <ModalRenderer />
-  <RouterView />
+  <div class="modal" :class="{ 'show': show }">
+    <div class="modal-content">
+      {{ content }}
+      <button @click="$emit('update:visible', false)">关闭</button>
+    </div>
+  </div>
 </template>
 ```
 
-Modal.vue
+3. 在应用中使用：
+
+```typescript
+import { makeModal } from './dialog';
+import MyModal from './MyModal.vue';
+
+// 创建模态框上下文
+
+
+// 创建模态框实例
+const modal = makeModal(MyModal);
+
+// 打开模态框
+modal.open({
+  // 传入 props
+  content: 'Hello, World!'
+});
+
+setTimeout(() => {
+  modal.close();
+}, 3000);
+
+
+```
+
+4. 在应用根组件中挂载渲染器：
+
 ```vue
-<script lang="ts" setup>
-import Dialog from '../layout/DialogContent.vue';
-import { onUnmounted } from 'vue';
-
-const $show = defineModel<boolean>('show');
-const $props = withDefaults(defineProps<{
-    onClose?: (isConfirm: boolean) => void;
-    /**标题 */
-    title?: string;
-    /**内容 */
-    content: string;
-    /**用户提示 */
-    tip?: string;
-    /**确认按钮文本 */
-    confirmText?: string;
-    /**取消按钮文本 */
-    cancelText?: string;
-    /**是否可以通过点击外部关闭按钮 */
-    closeOnClickOutside?: boolean;
-}>(), {
-    title: '提示',
-    closeOnClickOutside: true,
-    confirmText: '确定',
-    onClose: () => { }
-});
-
-const closeModal = (isConfirm: boolean) => {
-    $props.onClose(isConfirm);
-    $show.value = false;
-};
-
-onUnmounted(() => {
-    closeModal(false);
-});
+<!-- App.vue -->
+<script setup lang="ts">
+import { ModalRenderer } from './dialog';
 </script>
-
 <template>
-    <Dialog @click-outside="$props.closeOnClickOutside && closeModal(false)">
-        <h3 class="text-lg font-bold mb-4" v-if="$props.title">{{ $props.title }}</h3>
-        <p class="mb-4" v-html="$props.content.replace(/\n/g, '<br/>')" />
-        <div class="flex space-x-2">
-            <span class="flex-1">{{ $props.tip }}</span>
-            <button class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 transition duration-300"
-                v-if="$props.cancelText" @click="closeModal(false)">
-                {{ $props.cancelText }}
-            </button>
-            <button class="px-4 py-2 bg-blue text-white rounded hover:bg-blue-300 transition duration-300"
-                v-if="$props.confirmText" @click="closeModal(true)">{{ $props.confirmText }}</button>
-        </div>
-    </Dialog>
+  <Teleport to="body">
+    <ModalRenderer />
+  </Teleport>
+  <!-- Page Content -->
 </template>
-
-<style lang="scss" scoped></style>
 ```
 
-任意位置
-```ts
-import DialogComp from './Modal.vue'
-const { open, close } = makeModal(DialogComp);
-open({
-  content: "对话框"
-})
+## API 文档
+
+### createModalContext
+
+创建模态框上下文，返回模态框管理器实例。
+
+```typescript
+interface ModalOptions {
+  baseZIndex?: number;      // 基础 z-index 值
+  enableAnimation?: boolean; // 是否启用动画
+  allowMultiple?: boolean;   // 是否允许多个模态框同时存在
+  debug?: boolean;          // 是否启用调试模式
+}
+
+const context = createModalContext(options?: ModalOptions);
 ```
 
-## 更加高级的用法
-modal.ts
-```ts
-import { defineAsyncComponent } from 'vue';
-import { makeModal, type ExtractComponentOptions } from 'vue-modal-core';
+### makeModal
 
+创建模态框实例。
 
-const DialogComp = defineAsyncComponent(() => import('./components/Dialog.vue'));
+```typescript
+const modal = makeModal(YourModalComponent);
 
-export const dialog = (opts: Omit<ExtractComponentOptions<typeof DialogComp>, 'onClose'>) => {
-    const { open, close } = makeModal(DialogComp);
-    // @ts-ignore
-    const result: Promise<boolean> & {
-        close: () => void;
-        setOption: (opts: Omit<ExtractComponentOptions<typeof DialogComp>, 'onClose'>) => void;
-    } = new Promise<boolean>((resolve) => {
-        open({
-            ...opts,
-            onClose: (value) => {
-                result.setOption = () => { };
-                resolve(value);
-            },
-        });
-    });
-    result.close = close;
-    result.setOption = open;
-    return result;
-
-};
-
-```
-
-```ts
-import { dialog } from './modal';
-
-const e = await dialog({
-  content: "确认要关闭吗",
-  confirmText: "确认",
-  cancelText: "取消",
-})
-if (e) {
-  await dialog({
-    content:"你点击了确认"
-  })
-} else {
-  await dialog({
-    content:"你点击了取消"
-  })
+// 返回的实例包含以下方法：
+interface ModalInstance {
+  open: (props: ComponentProps) => void;  // 打开模态框
+  close: () => Promise<boolean>;          // 关闭模态框
+  isVisible: () => boolean;               // 获取模态框可见状态
 }
 ```
 
+### onBeforeClose
 
-## Thanks
-- [vue3](https://github.com/vuejs/core)
+添加模态框关闭前的钩子函数。
 
-## License
+```typescript
+onBeforeClose(() => {
+  // 返回 false 可以阻止模态框关闭
+  return true;
+});
+```
 
-MIT
+## 其它
+
+- 这个项目基本是我自己一个人在使用的，所以可能会有一些问题，欢迎提交 PR 和 Issue
+
+## 许可证
+
+[MIT](LICENSE)
+
