@@ -50,13 +50,11 @@ export const ModalKey: InjectionKey<ModalContext> = Symbol('modal-context');
 /**
  * 模态框配置选项接口
  * @property baseZIndex - 基础 z-index 值
- * @property enableAnimation - 是否启用动画
  * @property allowMultiple - 是否允许多个模态框同时存在
  * @property debug - 是否启用调试模式
  */
 export interface ModalOptions {
     baseZIndex?: number;
-    enableAnimation?: boolean;
     allowMultiple?: boolean;
     debug?: boolean;
 }
@@ -64,7 +62,6 @@ export interface ModalOptions {
 // 默认配置
 const DEFAULT_OPTIONS: Required<ModalOptions> = {
     baseZIndex: 1000,
-    enableAnimation: true,
     allowMultiple: true,
     debug: false
 };
