@@ -46,6 +46,7 @@ export interface ModalContext {
  * 模态框上下文的注入键
  */
 export const ModalKey: InjectionKey<ModalContext> = Symbol('modal-context');
+export const ModalIdKey: InjectionKey<symbol> = Symbol('modal-id');
 
 /**
  * 模态框配置选项接口
@@ -69,32 +70,33 @@ const DEFAULT_OPTIONS: Required<ModalOptions> = {
 /**
  * 添加模态框关闭前的钩子函数
  * @param fn 钩子函数，返回 false 可以阻止模态框关闭
- * @throws 如果在组件外部使用或未找到模态框上下文会抛出错误
+ * @throws 如果在组件外部使用或未找到模态框上下文会打印警告
  */
 export const onBeforeClose = (fn: () => Promise<void | boolean> | void | boolean) => {
     const ctx = getCurrentInstance();
     if (!ctx) {
-        throw new Error('onBeforeClose must be used in a component');
+        console.warn('onBeforeClose must be used in a component');
+        return;
     }
 
     const modalContext = inject(ModalKey);
     if (!modalContext) {
-        throw new Error('Modal context not found, make sure ModalRenderer is mounted');
+        console.warn('Modal context not found, make sure ModalRenderer is mounted');
+        return;
     }
 
-    const modalId = ctx.vnode.key as symbol;
+    const modalId = inject(ModalIdKey);
     if (!modalId) {
-        throw new Error('Component must have a key');
+        console.warn('ModalId not found, make sure the component is used inside a modal');
+        return;
     }
 
-    // 为每个组件生成唯一的ID
-    const componentId = Symbol('ComponentId');
-    // 存储函数引用而不是立即执行
-    modalContext.addClosePromise(modalId, componentId, fn);
+    const fnId = Symbol('fnKey');
+    modalContext.addClosePromise(modalId, fnId, fn);
 
     // 在组件卸载时清理
     onUnmounted(() => {
-        modalContext.removeComponentPromises(modalId, componentId);
+        modalContext.removeComponentPromises(modalId, fnId);
     });
 };
 
@@ -105,11 +107,11 @@ export const onBeforeClose = (fn: () => Promise<void | boolean> | void | boolean
  */
 export function createModalContext(options: ModalOptions = {}) {
     const mergedOptions = { ...DEFAULT_OPTIONS, ...options };
-    const modalsMap = new Map<symbol, {
+    const modalsMap = shallowReactive(new Map<symbol, {
         comp: Component;
         props: Record<string, unknown> & { visible: boolean; };
         meta: ModalMeta;
-    }>();
+    }>());
 
     const modalQueue: symbol[] = [];
 
@@ -151,7 +153,7 @@ export function createModalContext(options: ModalOptions = {}) {
             // 收集所有组件的函数并按后进先出顺序执行
             const allFns = Array.from(modal.meta.closePromises.values())
                 .flat();
-            
+
             // 依次执行每个函数，如果任何一个返回 false 则取消关闭
             for (const fn of allFns) {
                 const result = await Promise.resolve(fn());
@@ -212,7 +214,15 @@ export function createModalContext(options: ModalOptions = {}) {
                 modalQueue.push(id);
 
                 modalsMap.set(id, {
-                    comp,
+                    comp: {
+                        ...comp,
+                        setup: (props: any, context: any) => {
+                            provide(ModalIdKey, id);
+                            return typeof comp === 'object' && comp.setup
+                                ? comp.setup(props, context)
+                                : undefined;
+                        }
+                    },
                     props: shallowReactive({
                         ...props,
                         visible: true,

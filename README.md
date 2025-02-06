@@ -115,7 +115,6 @@ import { ModalRenderer } from './dialog';
 ```typescript
 interface ModalOptions {
   baseZIndex?: number;      // 基础 z-index 值
-  enableAnimation?: boolean; // 是否启用动画
   allowMultiple?: boolean;   // 是否允许多个模态框同时存在
   debug?: boolean;          // 是否启用调试模式
 }
