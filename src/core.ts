@@ -145,7 +145,7 @@ export function createModalContext(options: ModalOptions = {}) {
     const closeModal = async (id: symbol) => {
         const modal = modalsMap.get(id);
         if (!modal || modal.meta.isClosing) return false;
-
+        modal.props.visible = false;
         modal.meta.isClosing = true;
         log('Closing modal', id);
 
@@ -195,7 +195,6 @@ export function createModalContext(options: ModalOptions = {}) {
                     const lastModalId = modalQueue[modalQueue.length - 1];
                     const lastModal = modalsMap.get(lastModalId);
                     if (lastModal) {
-                        lastModal.props.visible = false;
                         closeModal(lastModalId);
                     }
                 }
@@ -238,7 +237,6 @@ export function createModalContext(options: ModalOptions = {}) {
             close: async () => {
                 const modal = modalsMap.get(id);
                 if (modal) {
-                    modal.props.visible = false;
                     return closeModal(id);
                 }
                 return false;
@@ -262,14 +260,14 @@ export function createModalContext(options: ModalOptions = {}) {
                     key: id,
                     ...props,
                     'onUpdate:visible': async (value: boolean) => {
-                        if (!value) {
+                        if (value) {
+                            props.visible = true;
+                        } else {
                             const closed = await closeModal(id);
                             if (!closed) {
                                 props.visible = true;
-                                return;
                             }
                         }
-                        props.visible = value;
                     }
                 })
             );
