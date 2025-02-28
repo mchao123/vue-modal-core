@@ -1,6 +1,6 @@
 {
     "name": "vue-modal-core",
-    "version": "1.0.3",
+    "version": "1.0.4",
     "license": "MIT",
     "description": "一个轻量级的 Vue 3 模态框管理库，提供灵活的模态框控制和生命周期管理",
     "repository": {
