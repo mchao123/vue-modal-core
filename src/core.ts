@@ -55,14 +55,12 @@ export const ModalIdKey: InjectionKey<symbol> = Symbol('modal-id');
  * @property debug - 是否启用调试模式
  */
 export interface ModalOptions {
-    baseZIndex?: number;
     allowMultiple?: boolean;
     debug?: boolean;
 }
 
 // 默认配置
 const DEFAULT_OPTIONS: Required<ModalOptions> = {
-    baseZIndex: 1000,
     allowMultiple: true,
     debug: false
 };
@@ -189,6 +187,10 @@ export function createModalContext(options: ModalOptions = {}) {
                 const modal = modalsMap.get(id);
                 return modal ? modal.props.visible : false;
             },
+            isClosing: () => {
+                const modal = modalsMap.get(id);
+                return modal ? modal.meta.isClosing : false
+            },
             open: (props: ExtractComponentOptions<C>) => {
                 if (!mergedOptions.allowMultiple && modalQueue.length > 0) {
                     log('Multiple modals not allowed, closing existing modal');
@@ -206,10 +208,11 @@ export function createModalContext(options: ModalOptions = {}) {
                         return;
                     }
                     modal.meta.isClosing = false;
-                    modalsMap.delete(id);
+                    modal.props.visible = true;
+                    // modalsMap.delete(id);
+                    return;
                 }
 
-                const zIndex = mergedOptions.baseZIndex + modalQueue.length;
                 modalQueue.push(id);
 
                 modalsMap.set(id, {
@@ -225,14 +228,13 @@ export function createModalContext(options: ModalOptions = {}) {
                     props: shallowReactive({
                         ...props,
                         visible: true,
-                        style: { zIndex }
                     }),
                     meta: {
                         closePromises: new Map()
                     }
                 });
 
-                log('Modal opened', { id, zIndex });
+                log('Modal opened', { id });
             },
             close: async () => {
                 const modal = modalsMap.get(id);
