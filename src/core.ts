@@ -1,4 +1,4 @@
-import { type Component, shallowReactive, getCurrentInstance, type AllowedComponentProps, type VNodeProps, type InjectionKey, provide, inject, h, onUnmounted } from 'vue';
+import { type Component, shallowReactive, getCurrentInstance, type AllowedComponentProps, type VNodeProps, type InjectionKey, provide, inject, h, onUnmounted, defineComponent } from 'vue';
 
 /**
  * 从组件中提取 Props 类型，排除 Vue 内置的 VNodeProps 和 AllowedComponentProps
@@ -216,15 +216,12 @@ export function createModalContext(options: ModalOptions = {}) {
                 modalQueue.push(id);
 
                 modalsMap.set(id, {
-                    comp: {
-                        ...comp,
-                        setup: (props: any, context: any) => {
+                    comp: defineComponent({
+                        setup(_, { attrs, slots }) {
                             provide(ModalIdKey, id);
-                            return typeof comp === 'object' && comp.setup
-                                ? comp.setup(props, context)
-                                : undefined;
+                            return () => h(comp, attrs, slots);
                         }
-                    },
+                    }),
                     props: shallowReactive({
                         ...props,
                         visible: true,
