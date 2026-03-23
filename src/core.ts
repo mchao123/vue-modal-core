@@ -1,4 +1,4 @@
-import { type Component, shallowReactive, getCurrentInstance, type AllowedComponentProps, type VNodeProps, type InjectionKey, provide, inject, h, onUnmounted, defineComponent } from 'vue';
+import { type Component, shallowReactive, getCurrentInstance, type AllowedComponentProps, type VNodeProps, type InjectionKey, provide, inject, h, onUnmounted, defineComponent, type SetupContext, DefineSetupFnComponent, SlotsType } from 'vue';
 
 /**
  * 从组件中提取 Props 类型，排除 Vue 内置的 VNodeProps 和 AllowedComponentProps
@@ -244,34 +244,72 @@ export function createModalContext(options: ModalOptions = {}) {
     }
 
     const ModalRenderer = {
-        name: 'ModalRenderer',
-        setup() {
+        setup(_: any, { slots }: SetupContext) {
             provide(ModalKey, {
                 modalsMap,
                 closeModal,
                 addClosePromise,
                 removeComponentPromises
             });
-        },
-        render() {
-            return Array.from(modalsMap.entries()).map(([id, { comp, props }]) =>
-                h(comp, {
-                    key: id,
-                    ...props,
-                    'onUpdate:visible': async (value: boolean) => {
-                        if (value) {
-                            props.visible = true;
-                        } else {
-                            const closed = await closeModal(id);
-                            if (!closed) {
-                                props.visible = true;
+            return () => {
+                if (slots.default) {
+                    const modalsWithHandlers = Array.from(modalsMap.entries()).map(([id, { comp, props }]) => ({
+                        id,
+                        comp,
+                        props: {
+                            ...props,
+                            'onUpdate:visible': async (value: boolean) => {
+                                if (value) {
+                                    props.visible = true;
+                                } else {
+                                    const closed = await closeModal(id);
+                                    if (!closed) {
+                                        props.visible = true;
+                                    }
+                                }
                             }
                         }
-                    }
-                })
-            );
+                    }));
+                    return slots.default({
+                        modals: modalsWithHandlers,
+                        closeModal,
+                        modalsMap
+                    });
+                }
+                return Array.from(modalsMap.entries()).map(([id, { comp, props }]) =>
+                    h(comp, {
+                        key: id,
+                        ...props,
+                        'onUpdate:visible': async (value: boolean) => {
+                            if (value) {
+                                props.visible = true;
+                            } else {
+                                const closed = await closeModal(id);
+                                if (!closed) {
+                                    props.visible = true;
+                                }
+                            }
+                        }
+                    })
+                );
+            };
         }
-    };
+    } as unknown as DefineSetupFnComponent<{}, {}, SlotsType<{
+        default: (props: {
+            modals: {
+                id: symbol;
+                comp: Component;
+                props: Record<string, unknown> & { visible: boolean; };
+                meta: ModalMeta;
+            }[],
+            closeModal: (id: symbol) => Promise<boolean>,
+            modalsMap: Map<symbol, {
+                comp: Component;
+                props: Record<string, unknown> & { visible: boolean; };
+                meta: ModalMeta;
+            }>,
+        }) => any
+    }>>
 
     return {
         makeModal,
